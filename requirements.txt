@@ -1,35 +1,10 @@
-# Django Core
 Django==5.0.2
-django-compat==1.0.15
-
-# API & REST Framework
 djangorestframework==3.16.1
-django-rest-auth==0.9.5
-
-# CORS & Security
 django-cors-headers==4.7.0
-cryptography==42.0.8
-
-# Database
+django-filter==25.2
 psycopg2-binary==2.9.9
-dj-database-url==1.2.0
-pymysql==1.1.0
-
-# Filters
-django-filter==25.0
-
-# Utilities
-python-dateutil==2.9.0.post0
-Pillow==10.4.0
-
-# HTTP & Storage
-requests==2.32.3
-google-cloud-storage==2.15.0
-
-# Production Server
 gunicorn==22.0.0
 whitenoise==6.6.0
-
-# Optional but recommended for Django 5.0
-asgiref==3.8.1
-sqlparse==0.5.3
+Pillow==10.4.0
+python-dateutil==2.9.0.post0
+requests==2.32.3
