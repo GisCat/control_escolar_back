@@ -1,15 +1,35 @@
+# Django Core
 Django==5.0.2
 django-compat==1.0.15
-django-cors-headers==4.7.0
+
+# API & REST
 djangorestframework==3.16.1
-django-filter>=24,<26
-pymysql
-django-rest-auth
-python-dateutil==2.9.0.post0
-requests==2.32.3
+django-rest-auth==0.9.5
+
+# CORS & Security
+django-cors-headers==4.7.0
 cryptography==42.0.8
-google-cloud-storage==2.15.0
-Pillow==10.4.0
+
+# Database
+psycopg2-binary==2.9.9
 dj-database-url==1.2.0
-psycopg2-binary
-gunicorn
+pymysql==1.1.0
+
+# Filters & Utilities
+django-filter==25.0  # Compatible con Django 5.0
+python-dateutil==2.9.0.post0
+
+# Storage & Media
+Pillow==10.4.0
+google-cloud-storage==2.15.0
+
+# HTTP & Requests
+requests==2.32.3
+
+# Production
+gunicorn==22.0.0
+whitenoise==6.6.0  # IMPORTANTE: Agregar esto
+
+# Optional but recommended
+python-dotenv==1.0.0  # Para variables de entorno
+django-environ==0.11.2  # Manejo de entornos
