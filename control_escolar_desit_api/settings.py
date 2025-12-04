@@ -33,14 +33,18 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# Configuración de CORS: define orígenes permitidos y quita CORS_ORIGIN_ALLOW_ALL
+# settings.py
+
+# Configuración de CORS: define orígenes permitidos
 CORS_ALLOWED_ORIGINS = [
+    # URL de tu Frontend en Render (¡CRUCIAL!)
+    'https://control-escolar-front.onrender.com', 
+    
+    # Para pruebas locales con Angular
     'http://localhost:4200',
-     'http://127.0.0.1:4200'
+    'http://127.0.0.1:4200',
 ]
 CORS_ALLOW_CREDENTIALS = True
-
-ROOT_URLCONF = 'control_escolar_desit_api.urls'
 
 
 
