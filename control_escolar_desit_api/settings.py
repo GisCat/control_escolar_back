@@ -72,15 +72,29 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'control_escolar_desit_api.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'OPTIONS': {
+
+import dj_database_url
+
+# Obtiene la URL de Render, si existe
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    # Si estamos en Render, usa la URL de PostgreSQL
+    DATABASES = {
+        'default': dj_database_url.config(default=DATABASE_URL)
+    }
+else:
+    # Si estamos localmente, usa tu configuración local
+    DATABASES = {
+        'default': {
+            # Configuración local de MySQL o SQLite
+            'ENGINE': 'django.db.backends.mysql',
+            'OPTIONS': {
             'read_default_file': os.path.join(BASE_DIR, "my.cnf"),
             'charset': 'utf8mb4',
         }
+        }
     }
-}
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
