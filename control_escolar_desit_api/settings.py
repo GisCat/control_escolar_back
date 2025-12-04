@@ -46,7 +46,8 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CORS_ALLOW_CREDENTIALS = True
 
-
+# Define el módulo principal de URL de tu proyecto.
+ROOT_URLCONF = 'control_escolar_desit_api.urls'
 
 import os
 
