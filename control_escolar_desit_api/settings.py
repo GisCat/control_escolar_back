@@ -1,28 +1,31 @@
 import os
 from pathlib import Path
 import dj_database_url
+from datetime import timedelta
 
+# Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY CONFIGURATION
-SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key-here')
+# Security
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-key-here')
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-# ALLOWED_HOSTS for Render
+# Hosts configuration for Render
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 ALLOWED_HOSTS = []
 
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-    
+
+# Add other hosts
 ALLOWED_HOSTS.extend([
     'control-escolar-back-dhku.onrender.com',
     'localhost',
     '127.0.0.1',
-    '.onrender.com',  # Para cualquier subdominio de Render
+    '.onrender.com',  # All Render subdomains
 ])
 
-# INSTALLED APPS
+# Apps
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -30,19 +33,24 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_filters',
+    
+    # Third party
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
+    'django_filters',
+    'rest_auth',
+    
+    # Local
     'control_escolar_desit_api',
-    'whitenoise.runserver_nostatic',
 ]
 
+# Middleware - IMPORTANT ORDER
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Must be first
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # For static files
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -50,81 +58,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# CORS CONFIGURATION - CRITICAL FOR RENDER
-CORS_ALLOWED_ORIGINS = [
-    'https://control-escolar-front.onrender.com',
-    'http://localhost:4200',
-    'http://127.0.0.1:4200',
-    'http://localhost:8000',
-]
-
-# Para desarrollo, puedes permitir todos los orígenes
-if DEBUG:
-    CORS_ALLOW_ALL_ORIGINS = True
-else:
-    CORS_ALLOW_ALL_ORIGINS = False
-
-CORS_ALLOW_CREDENTIALS = True
-CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
-
-# Headers adicionales
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-    'access-control-allow-origin',
-]
-
 ROOT_URLCONF = 'control_escolar_desit_api.urls'
 
-# DATABASE CONFIGURATION FOR POSTGRESQL 16
-DATABASE_URL = os.environ.get('DATABASE_URL')
-
-if DATABASE_URL:
-    # PostgreSQL en Render
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,
-            ssl_require=True  # Importante para Render
-        )
-    }
-    
-    # Optimización para PostgreSQL
-    DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql'
-    DATABASES['default']['OPTIONS'] = {
-        'connect_timeout': 10,
-        'options': '-c search_path=public',
-    }
-else:
-    # Desarrollo local (puedes usar PostgreSQL o SQLite)
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('LOCAL_DB_NAME', 'control_escolar'),
-            'USER': os.environ.get('LOCAL_DB_USER', 'postgres'),
-            'PASSWORD': os.environ.get('LOCAL_DB_PASSWORD', ''),
-            'HOST': os.environ.get('LOCAL_DB_HOST', 'localhost'),
-            'PORT': os.environ.get('LOCAL_DB_PORT', '5432'),
-        }
-    }
-
-# STATIC FILES CONFIGURATION
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-# MEDIA FILES
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
+# Templates
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -143,26 +79,116 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'control_escolar_desit_api.wsgi.application'
 
-# PASSWORD VALIDATION
+# Database - PostgreSQL 16 on Render
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    # Render PostgreSQL configuration
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=True
+        )
+    }
+    
+    # Ensure PostgreSQL engine
+    DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql'
+    
+    # PostgreSQL optimizations
+    DATABASES['default']['OPTIONS'] = {
+        'connect_timeout': 10,
+        'keepalives': 1,
+        'keepalives_idle': 30,
+        'keepalives_interval': 10,
+        'keepalives_count': 5,
+    }
+else:
+    # Local development (can be PostgreSQL or MySQL)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',  # Change to 'django.db.backends.mysql' if needed
+            'NAME': os.environ.get('DB_NAME', 'control_escolar'),
+            'USER': os.environ.get('DB_USER', 'postgres'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST': os.environ.get('DB_HOST', 'localhost'),
+            'PORT': os.environ.get('DB_PORT', '5432'),
+        }
+    }
+
+# Password validation
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
 ]
 
-# INTERNATIONALIZATION
+# Internationalization
 LANGUAGE_CODE = 'es-mx'
 TIME_ZONE = 'America/Mexico_City'
 USE_I18N = True
-USE_L10N = True
 USE_TZ = True
 
-# REST FRAMEWORK CONFIGURATION
+# Static files (CSS, JavaScript, Images)
+STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Media files
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Default primary key field type
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# CORS Configuration - CRITICAL FOR YOUR SETUP
+CORS_ALLOWED_ORIGINS = [
+    'https://control-escolar-front.onrender.com',
+    'http://localhost:4200',
+    'http://127.0.0.1:4200',
+    'http://localhost:8000',
+]
+
+# Allow credentials (cookies, authorization headers)
+CORS_ALLOW_CREDENTIALS = True
+
+# Allowed methods
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# Allowed headers
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'access-control-allow-origin',
+    'access-control-allow-credentials',
+]
+
+# REST Framework configuration
 REST_FRAMEWORK = {
-    'COERCE_DECIMAL_TO_STRING': False,
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
@@ -174,20 +200,25 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
     ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+    'COERCE_DECIMAL_TO_STRING': False,
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ],
 }
 
-# SECURITY SETTINGS FOR PRODUCTION
+# Security settings for production
 if not DEBUG:
-    # SSL/HTTPS settings
+    # HTTPS settings
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
+    
+    # HSTS settings
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
@@ -199,13 +230,13 @@ if not DEBUG:
         'https://*.onrender.com',
     ]
 
-# LOGGING CONFIGURATION
+# Logging configuration for debugging
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
             'style': '{',
         },
         'simple': {
@@ -218,17 +249,16 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
-        'file': {
-            'class': 'logging.FileHandler',
-            'filename': 'debug.log',
-            'formatter': 'verbose',
-        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
     },
     'loggers': {
         'django': {
             'handlers': ['console'],
             'level': 'INFO',
-            'propagate': True,
+            'propagate': False,
         },
         'django.db.backends': {
             'handlers': ['console'],
@@ -241,7 +271,7 @@ LOGGING = {
             'propagate': False,
         },
         'control_escolar_desit_api': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': False,
         },
